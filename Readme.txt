@@ -6,6 +6,7 @@ To complie and run my code please follow below steps:-
 3. Then run chmod +x init 
 4. Then run ./init node.txt to initialize finger table list
 5. Then Run Client bash script using ./client.sh ipaddress portnumber
+6. Then run client with different server ipaddress and port number
 
 
 This code tested on Remote machine

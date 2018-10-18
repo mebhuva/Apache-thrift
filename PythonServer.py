@@ -57,10 +57,10 @@ class FileStoreHandler:
         logger.debug("transport complete")
 	logger.debug("inside findPred condition")
 	if(fnCondition):
+		logger.debug("outside findPred condition")
         	newnode = client.findPred(key)
 	else:
 		newnode = client.getNodeSucc()
-	logger.debug("outside findPred condition")
 	transport.close()
 	return newnode
 
@@ -156,6 +156,7 @@ class FileStoreHandler:
         	raise SystemException("Server don't have have the file")
 		return             
         else:            
+		logger.debug("Reading file from the Server dictionary")
                 rFile = self.serverdict[filename]
 		logger.debug("File read complete :"+ filename)
 		return rFile
