@@ -37,12 +37,32 @@ class FileStoreHandler:
         return False
 
     def setFingertable(self, node_list):
-	logger.debug("inside setfinger table")
+	logger.debug("Started filling finger table list")
+	print "inside setfinger table"
         if not node_list: 
         	raise SystemException("Finger table can not be set because Node list is empty")
         	return
         self.FingerTable= node_list
-        logger.debug("setfinger table done")
+	print "setfinger table done"
+        logger.debug("Ended filling finger table list")
+	
+
+    def NodeRPC(self,Node,key,fnCondition):
+	logger.debug("inside node rpc")
+        transport = TSocket.TSocket(Node.ip, int(Node.port))
+        transport = TTransport.TBufferedTransport(transport)
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
+        client = FileStore.Client(protocol)
+        transport.open()
+        logger.debug("transport complete")
+	logger.debug("inside findPred condition")
+	if(fnCondition):
+        	newnode = client.findPred(key)
+	else:
+		newnode = client.getNodeSucc()
+	logger.debug("outside findPred condition")
+	transport.close()
+	return newnode
 
     def findPred(self, key):
 	logger.debug("Statrted looking for node predecessor")
@@ -54,10 +74,11 @@ class FileStoreHandler:
 	if(inBet):
 		return CurrentNode
 	else:
-		highestNodeforCurrentNode = self.FingerTable[-1]
+		highestCurrentNode = self.FingerTable[-1]
 		for currentListNode in reversed(self.FingerTable):
                 	if(self.FindRange(currentListNode.id, CurrentNode.id, key)):
-		        	return highestNodeforCurrentNode
+				return self.NodeRPC(currentListNode,key,True)
+		return highestCurrentNode
 	return CurrentNode
 
     def getNodeSucc(self):
@@ -83,6 +104,8 @@ class FileStoreHandler:
 		newnode = self.getNodeSucc()
         	logger.debug("End finding node succesor")  
                 return newnode
+	else:
+		return self.NodeRPC(Node,key,False)
 
     def writeFile(self, rFile):
 	if(not self.FingerTable):
@@ -95,16 +118,21 @@ class FileStoreHandler:
         	logger.debug("Can't write the file beacuse server does not own the file")
         	raise SystemException("Can't write the file beacuse server does not own the file")
         	return
-        objRFile = RFile(RFileMetadata(),"")
+        rFileobj = RFile(RFileMetadata(),"")
 	if(not rFile.meta.filename in self.serverdict.keys()):
 		logger.debug("Creting New File started")   
-                objRFile = rFile
-                objRFile.meta.version = 0
-                objRFile.meta.contentHash = sha256(rFile.content).hexdigest()
-		objRFile.content = rFile.content
-                objRFile.meta.filename = rFile.meta.filename
-		logger.debug("File object with all metainformation created")                   
-        self.serverdict[rFile.meta.filename] = objRFile
+                rFileobj = rFile
+                rFileobj.meta.version = 0
+                rFileobj.meta.contentHash = sha256(rFile.content).hexdigest()
+		rFileobj.content = rFile.content
+                rFileobj.meta.filename = rFile.meta.filename
+		logger.debug("File object with all metainformation created")       
+	else: 
+			rFileobj.meta.contentHash = sha256(rFile.content).hexdigest()
+                	rFileobj.content = rFile.content
+                	rFileobj.meta.version = rfile.meta.version + 1
+                 	rFileobj.meta.filename = rfile.meta.filename              
+        self.serverdict[rFile.meta.filename] = rFileobj
         logger.debug("File " + rFile.meta.filename + " writing Complete" )
 	return
 
